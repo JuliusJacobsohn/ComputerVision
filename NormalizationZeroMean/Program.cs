@@ -52,28 +52,12 @@ namespace NormalizationZeroMean
 
 
             //Determine amount of pixels and the sum of their values
-            double pixelAmount = greyscaleValues.GetLength(0) * greyscaleValues.GetLength(1);
-            double pixelSum = 0;
-            for (int x = 0; x < greyscaleValues.GetLength(0); x++)
-            {
-                for (int y = 0; y < greyscaleValues.GetLength(1); y++)
-                {
-                    pixelSum += greyscaleValues[x, y];
-                }
-            }
-
-            double mu = (1.0 / pixelAmount) * pixelSum;
+            double mu = CalculateMean(greyscaleValues);
 
             //Determine squared sum
-            double squaredSum = 0;
-            for (int x = 0; x < greyscaleValues.GetLength(0); x++)
-            {
-                for (int y = 0; y < greyscaleValues.GetLength(1); y++)
-                {
-                    squaredSum += Math.Pow(greyscaleValues[x, y] - mu, 2);
-                }
-            }
-            double sigmaSquared = (1.0 / pixelAmount) * squaredSum;
+            double sigmaSquared = CalculateDeviation(greyscaleValues, mu);
+
+            Console.WriteLine($"Source mu={mu}, sigma²={sigmaSquared}");
 
             //Calculate transformed values
             double[,] transformedValues = new double[image.Width, image.Height];
@@ -85,12 +69,17 @@ namespace NormalizationZeroMean
             {
                 for (int y = 0; y < transformedValues.GetLength(1); y++)
                 {
-                    double normalizedGreyscaleValue = (greyscaleValues[x, y] - mu) / sigmaSquared;
+                    double normalizedGreyscaleValue = (greyscaleValues[x, y] - mu) / Math.Sqrt(sigmaSquared);
                     min = Math.Min(normalizedGreyscaleValue, min);
                     max = Math.Max(normalizedGreyscaleValue, max);
                     transformedValues[x, y] = normalizedGreyscaleValue;
                 }
             }
+
+            //Sanity check
+            double muNormalized = CalculateMean(transformedValues);
+            double sigmaSquaredNormalized = CalculateDeviation(transformedValues, muNormalized);
+            Console.WriteLine($"Normalized mu={Math.Round(muNormalized,2)}, sigma²={Math.Round(sigmaSquaredNormalized,2)}");
 
 
             //Produce target bitmap file (greyscale)
@@ -112,6 +101,64 @@ namespace NormalizationZeroMean
                 File.Delete(targetNormalizedPath);
             }
             targetFileNormalized.Save(targetNormalizedPath, ImageFormat.Jpeg);
+        }
+
+        private static double CalculateMean(int[,] values)
+        {
+            double pixelAmount = values.GetLength(0) * values.GetLength(1);
+            double pixelSum = 0;
+            for (int x = 0; x < values.GetLength(0); x++)
+            {
+                for (int y = 0; y < values.GetLength(1); y++)
+                {
+                    pixelSum += values[x, y];
+                }
+            }
+
+            return (1.0 / pixelAmount) * pixelSum;
+        }
+
+        private static double CalculateMean(double[,] values)
+        {
+            double pixelAmount = values.GetLength(0) * values.GetLength(1);
+            double pixelSum = 0;
+            for (int x = 0; x < values.GetLength(0); x++)
+            {
+                for (int y = 0; y < values.GetLength(1); y++)
+                {
+                    pixelSum += values[x, y];
+                }
+            }
+
+            return (1.0 / pixelAmount) * pixelSum;
+        }
+
+        private static double CalculateDeviation(double[,] values, double mean)
+        {
+            double squaredSum = 0;
+            double pixelAmount = values.GetLength(0) * values.GetLength(1);
+            for (int x = 0; x < values.GetLength(0); x++)
+            {
+                for (int y = 0; y < values.GetLength(1); y++)
+                {
+                    squaredSum += Math.Pow(values[x, y] - mean, 2);
+                }
+            }
+            return (1.0 / pixelAmount) * squaredSum;
+        }
+
+        private static double CalculateDeviation(int[,] values, double mean)
+        {
+            double squaredSum = 0;
+            double pixelAmount = values.GetLength(0) * values.GetLength(1);
+            for (int x = 0; x < values.GetLength(0); x++)
+            {
+                for (int y = 0; y < values.GetLength(1); y++)
+                {
+                    squaredSum += Math.Pow(values[x, y] - mean, 2);
+                }
+            }
+            return (1.0 / pixelAmount) * squaredSum;
         }
     }
 }
