@@ -93,7 +93,7 @@ namespace NormalizationZeroMean
             {
                 File.Delete(targetConvertedPath);
             }
-            targetFile.Save(targetConvertedPath, ImageFormat.Jpeg);
+            targetFileConverted.Save(targetConvertedPath, ImageFormat.Jpeg);
         }
     }
 }
