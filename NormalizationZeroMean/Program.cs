@@ -77,6 +77,8 @@ namespace NormalizationZeroMean
 
             //Calculate transformed values
             double[,] transformedValues = new double[image.Width, image.Height];
+
+            //Save min, max for future calculations
             double min = double.MaxValue;
             double max = double.MinValue;
             for (int x = 0; x < transformedValues.GetLength(0); x++)
@@ -97,6 +99,7 @@ namespace NormalizationZeroMean
             {
                 for (int y = 0; y < greyscaleValues.GetLength(1); y++)
                 {
+                    //Transform each real-valued brightness value onto an interval of 0-255
                     int normalizedTranslatedGreyscaleValue = (int)(255*(transformedValues[x, y]-min)/(max-min));
                     Color grey = Color.FromArgb(255, normalizedTranslatedGreyscaleValue, normalizedTranslatedGreyscaleValue, normalizedTranslatedGreyscaleValue);
                     targetFileNormalized.SetPixel(x, y, grey);
