@@ -16,7 +16,7 @@ namespace NormalizationZeroMean
             //Define file paths
             string sourcePath = @"App_Data\source.jpg";
             string targetPath = @"App_Data\target.jpg";
-            string targetConvertedPath = @"App_Data\targetConverted.jpg";
+            string targetNormalizedPath = @"App_Data\targetNormalized.jpg";
 
             //Load source image, convert to int[,] of greyscale values (0-255)
             Bitmap image = (Bitmap)Bitmap.FromFile(sourcePath);
@@ -75,25 +75,40 @@ namespace NormalizationZeroMean
             }
             double sigmaSquared = (1.0 / pixelAmount) * squaredSum;
 
+            //Calculate transformed values
+            double[,] transformedValues = new double[image.Width, image.Height];
+            double min = double.MaxValue;
+            double max = double.MinValue;
+            for (int x = 0; x < transformedValues.GetLength(0); x++)
+            {
+                for (int y = 0; y < transformedValues.GetLength(1); y++)
+                {
+                    double normalizedGreyscaleValue = (greyscaleValues[x, y] - mu) / sigmaSquared;
+                    min = Math.Min(normalizedGreyscaleValue, min);
+                    max = Math.Max(normalizedGreyscaleValue, max);
+                    transformedValues[x, y] = normalizedGreyscaleValue;
+                }
+            }
+
 
             //Produce target bitmap file (greyscale)
-            var targetFileConverted = new Bitmap(greyscaleValues.GetLength(0), greyscaleValues.GetLength(1));
+            var targetFileNormalized = new Bitmap(greyscaleValues.GetLength(0), greyscaleValues.GetLength(1));
             for (int x = 0; x < greyscaleValues.GetLength(0); x++)
             {
                 for (int y = 0; y < greyscaleValues.GetLength(1); y++)
                 {
-                    double normalizedGreyscaleValue = (greyscaleValues[x, y] - mu) / sigmaSquared;
-                    Color grey = Color.FromArgb(255, (int)normalizedGreyscaleValue, (int)normalizedGreyscaleValue, (int)normalizedGreyscaleValue);
-                    targetFileConverted.SetPixel(x, y, grey);
+                    int normalizedTranslatedGreyscaleValue = (int)(255*(transformedValues[x, y]-min)/(max-min));
+                    Color grey = Color.FromArgb(255, normalizedTranslatedGreyscaleValue, normalizedTranslatedGreyscaleValue, normalizedTranslatedGreyscaleValue);
+                    targetFileNormalized.SetPixel(x, y, grey);
                 }
             }
 
-            //Store converted target bitmap file
-            if (File.Exists(targetConvertedPath))
+            //Store normalized target bitmap file
+            if (File.Exists(targetNormalizedPath))
             {
-                File.Delete(targetConvertedPath);
+                File.Delete(targetNormalizedPath);
             }
-            targetFileConverted.Save(targetConvertedPath, ImageFormat.Jpeg);
+            targetFileNormalized.Save(targetNormalizedPath, ImageFormat.Jpeg);
         }
     }
 }
